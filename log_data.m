@@ -7,8 +7,8 @@ m.MagneticSensorEnabled        = 1;
 m.SampleRate = 'High';
 m.Logging = 1;
 
-fprintf('Collecting data for 10 seconds');
-pause(10);
+fprintf('Collecting data for 15 seconds');
+pause(15);
 m.Logging = 0;
 
 [acc_data, acc_T] = accellog(m);

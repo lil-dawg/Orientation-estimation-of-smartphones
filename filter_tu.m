@@ -20,9 +20,6 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
 %
 % Note that it is not necessary to provide inputs (calAcc, calGyr, calMag).
 
-  %% Setup necessary infrastructure
-  import('com.liu.sensordata.*');  % Used to receive data.
-
   %% Filter settings
   t0 = [];  % Initial time (initialize on first data received)
   nx = 4;   % Assuming that you use q as state variable.
@@ -47,13 +44,17 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                 'gyr', zeros(3, 0),...
                 'mag', zeros(3, 0),...
                 'orient', zeros(4, 0));
-  try
+ % try
     %% Create data link
-    server = StreamSensorDataReader(3400);
-    % Makes sure to resources are returned.
-    sentinel = onCleanup(@() server.stop());
+    m = mobiledev;
+    
+    m.AccelerationSensorEnabled   = 1;
+    m.AngularVelocitySensorEnabled = 1;
+    m.MagneticSensorEnabled       = 1;
+    m.OrientationSensorEnabled = 1;
+    m.SampleRate = 'High';
 
-    server.start();  % Start data reception.
+    m.Logging = 1;  % Start data reception.
 
     % Used for visualization.
     figure(1);
@@ -64,16 +65,48 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
     t_prev = [];
 
     %% Filter loop
-    while server.status()  % Repeat while data is available
+    while m.Connected  % Repeat while data is available
       % Get the next measurement set, assume all measurements
       % within the next 5 ms are concurrent (suitable for sampling
       % in 100Hz).
-      data = server.getNext(5);
+      pause(0.01)
+      
+      % Get data
+      % data = datanow(m);
 
-      if isnan(data(1))  % No new data received
-        continue;        % Skips the rest of the look
+      % if isempty(data)  % No new data received
+      %   continue;        % Skips the rest of the look
+      % end
+
+      % t   = data.Time;
+      % acc = data.Acceleration';   % [3x1]
+      % gyr = data.AngularVelocity'; % [3x1]
+      % mag = data.MagneticField';   % [3x1]
+      % orientation = data.Orientation';
+
+      % Get latest acceleration
+        [acc_data, acc_t] = accellog(m);
+        acc = acc_data(end, :)';  % take latest sample
+        
+        % Get latest gyroscope
+        [gyr_data, gyr_t] = angvellog(m);
+        gyr = gyr_data(end, :)';
+        
+        % Get latest magnetometer
+        [mag_data, mag_t] = magfieldlog(m);
+        mag = mag_data(end, :)';
+        
+        % Get latest orientation
+        [ori_data, ori_t] = orientlog(m);
+        orientation = ori_data(end, :)';
+        
+        % Use gyro timestamp as current time
+        t = gyr_t(end);
+
+      if isempty(t0)
+        t0 = t;
+        t_prev = t;
       end
-      t = data(1)/1000;  % Extract current time
 
       if isempty(t0)  % Initialize t0
         t0 = t;
@@ -83,35 +116,40 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       T = t - t_prev;  % Time since last measurement
       t_prev = t;
 
-      acc = data(1, 2:4)';
       if ~any(isnan(acc))  % Acc measurements are available.
         % Task 6
       end
-      gyr = data(1, 5:7)';
+
       if ~any(isnan(gyr))  % Gyro measurements are available.
         [x, P] = tu_qw(x, P, gyr, T, Rw);
       else
         [x, P] = tu_noAngRate(x, P, T, Rw);
       end
 
-      mag = data(1, 8:10)';
       if ~any(isnan(mag))  % Mag measurements are available.
         % Do something
       end
 
-      orientation = data(1, 18:21)';  % Google's orientation estimate.
+      if ~any(isnan(orientation))
+        az = deg2rad(orientation(1));
+        pitch = deg2rad(orientation(2));
+        roll  = deg2rad(orientation(3));
+        orientation_q = eul2quat([az, pitch, roll], 'ZYX')';
+      else
+        orientation_q = nan(4,1);
+      end
 
       % Visualize result
       if rem(counter, 10) == 0
         setOrientation(ownView, x(1:4));
         title(ownView, 'OWN', 'FontSize', 16);
-        if ~any(isnan(orientation))
+        if ~any(isnan(orientation_q))
           if isempty(googleView)
             subplot(1, 2, 2);
             % Used for visualization.
             googleView = OrientationView('Google filter', gca);
           end
-          setOrientation(googleView, orientation);
+          setOrientation(googleView, orientation_q);
           title(googleView, 'GOOGLE', 'FontSize', 16);
         end
       end
@@ -126,11 +164,11 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       meas.acc(:, end+1) = acc;
       meas.gyr(:, end+1) = gyr;
       meas.mag(:, end+1) = mag;
-      meas.orient(:, end+1) = orientation;
+      meas.orient(:, end+1) = orientation_q;
     end
-  catch e
+  %catch e
     fprintf(['Unsuccessful connecting to client!\n' ...
       'Make sure to start streaming from the phone *after*'...
              'running this function!']);
-  end
+ % end
 end
