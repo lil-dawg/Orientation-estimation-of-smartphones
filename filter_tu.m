@@ -103,11 +103,6 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
         % Use gyro timestamp as current time
         t = gyr_t(end);
 
-      if isempty(t0)
-        t0 = t;
-        t_prev = t;
-      end
-
       if isempty(t0)  % Initialize t0
         t0 = t;
         t_prev = t;
@@ -127,7 +122,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       end
 
       if ~any(isnan(mag))  % Mag measurements are available.
-        % Do something
+        % Task 9
       end
 
       if ~any(isnan(orientation))
