@@ -128,7 +128,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
         ownView.setAccDist(accOut);
 
         if ~accOut
-            [x, P] = mu_g(x, P, yacc, Ra, g0);
+            [x, P] = mu_g(x, P, acc, Ra, g0);
         end
       end
 
