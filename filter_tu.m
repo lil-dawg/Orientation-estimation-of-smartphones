@@ -117,7 +117,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       t_prev = t;
 
       if ~any(isnan(acc))  % Acc measurements are available.
-        % Task 6
+        [x, P] = mu_g(x, P, yacc, Ra, g0);
       end
 
       if ~any(isnan(gyr))  % Gyro measurements are available.
