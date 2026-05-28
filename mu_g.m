@@ -1,4 +1,4 @@
-    function [x, P] = mu_g(x, P, yacc, Ra, g0)
+function [x, P] = mu_g(x, P, yacc, Ra, g0)
     q = x;
 
     [Q0, Q1, Q2, Q3] = dQqdq(q);
