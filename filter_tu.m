@@ -29,6 +29,16 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                    0.0065  0.1607  0.0084;
                   -0.0124  0.0084  0.1485];
 
+  g = 9.82;
+  g0 = [-0.0497, 0.0228, 9.8325]'; % Mean of acceleration during rest
+  Ra = 1.0e-03 * [ 0.1014, -0.0167, -0.0062   % Covariance acc during rest
+                  -0.0167,  0.1210,  0.0016
+                  -0.0062,  0.0016,  0.0646];
+
+  m0 = 1.0e-6 * [-7.8563, -15.9990, -48.1585]';
+  Rm = [ 0.0882, 0.0042, 0.0071;
+         0.0042, 0.0814, 0.0015;
+         0.0071, 0.0015, 0.1161];
 
   % Current filter state.
   x = [1; 0; 0 ;0];
@@ -112,14 +122,6 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       t_prev = t;
 
       if ~any(isnan(acc))  % Acc measurements are available.
-
-        g0 = [-0.0497, 0.0228, 9.8325]'; % Mean of acceleration during rest
-        Ra = 1.0e-03 * [ 0.1014, -0.0167, -0.0062   % Covariance acc during rest
-                        -0.0167,  0.1210,  0.0016
-                        -0.0062,  0.0016,  0.0646];
-
-        g = 9.82;
-
         threshold = 0.2;
         accOut = abs(norm(acc) - g) > threshold;
 
