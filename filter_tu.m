@@ -112,7 +112,17 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       t_prev = t;
 
       if ~any(isnan(acc))  % Acc measurements are available.
-        [x, P] = mu_g(x, P, yacc, Ra, g0);
+        g = 9.82;
+
+        threshold = 0.2;
+        accOut = abs(norm(acc) - g) > threshold;
+
+        ownView.setAccDist(accOut);
+
+        if ~accOut
+            [x, P] = mu_g(x, P, yacc, Ra, g0);
+        end
+        
       end
 
       if ~any(isnan(gyr))  % Gyro measurements are available.
