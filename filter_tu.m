@@ -34,9 +34,9 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                   -0.0167,  0.1210,  0.0016
                   -0.0062,  0.0016,  0.0646];
 
-  mx = -7.8563 * 1.0e-6;
-  my = -15.9990 * 1.0e-6;
-  mz = -48.1585 * 1.0e-6;
+  mx = -7.8563;
+  my = -15.9990;
+  mz = -48.1585;
 
   m0 = [0, sqrt(mx^2 + my^2), mz]';
   Rm = [ 0.0882, 0.0042, 0.0071;
@@ -47,7 +47,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
 
   alpha = 0.01;
   L_hat = norm(m0);
-  mag_threshold = 100e-6;
+  mag_threshold = 5;
 
   % Current filter state.
   x = [1; 0; 0 ;0];
