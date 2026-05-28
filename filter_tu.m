@@ -29,7 +29,6 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                    0.0065  0.1607  0.0084;
                   -0.0124  0.0084  0.1485];
 
-  g = 9.82;
   g0 = [-0.0497, 0.0228, 9.8325]'; % Mean of acceleration during rest
   Ra = 1.0e-03 * [ 0.1014, -0.0167, -0.0062   % Covariance acc during rest
                   -0.0167,  0.1210,  0.0016
@@ -39,6 +38,12 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
   Rm = [ 0.0882, 0.0042, 0.0071;
          0.0042, 0.0814, 0.0015;
          0.0071, 0.0015, 0.1161];
+
+  g = 9.82;
+
+  alpha = 0.01;
+  L_hat = norm(m0);
+  mag_threshold = 100e-6;
 
   % Current filter state.
   x = [1; 0; 0 ;0];
@@ -139,7 +144,15 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       end
 
       if ~any(isnan(mag))  % Mag measurements are available.
-        [x, P] = mu_m(x, P, mag, m0, Rm);
+        L_hat = (1-alpha)*L_hat + alpha * norm(mag);
+
+        magOut = abs(norm(mag) - L_hat) > threshold;
+
+        ownView.setMagDist(magOut);
+
+        if ~magOut
+            [x, P] = mu_m(x, P, mag, m0, Rm);
+        end
       end
 
       if ~any(isnan(orientation))
