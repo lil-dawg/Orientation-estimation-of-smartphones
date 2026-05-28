@@ -137,7 +137,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       end
 
       if ~any(isnan(mag))  % Mag measurements are available.
-        % Task 9
+        [x, P] = mu_m(x, P, mag, m0, Rm);
       end
 
       if ~any(isnan(orientation))
