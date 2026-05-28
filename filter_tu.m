@@ -112,7 +112,11 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       t_prev = t;
 
       if ~any(isnan(acc))  % Acc measurements are available.
-        [x, P] = mu_g(x, P, yacc, Ra, g0);
+        g0 = [-0.0497, 0.0228, 9.8325]'; % Mean of acceleration during rest
+        Ra = 1.0e-03 * [ 0.1014, -0.0167, -0.0062   % Covariance acc during rest
+                        -0.0167,  0.1210,  0.0016
+                        -0.0062,  0.0016,  0.0646];
+        [x, P] = mu_g(x, P, acc, Ra, g0);
       end
 
       if ~any(isnan(gyr))  % Gyro measurements are available.
