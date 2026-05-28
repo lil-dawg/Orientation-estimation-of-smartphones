@@ -34,7 +34,11 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                   -0.0167,  0.1210,  0.0016
                   -0.0062,  0.0016,  0.0646];
 
-  m0 = 1.0e-6 * [-7.8563, -15.9990, -48.1585]';
+  mx = -7.8563 * 1.0e-6;
+  my = -15.9990 * 1.0e-6;
+  mz = -48.1585 * 1.0e-6;
+
+  m0 = [0, sqrt(mx^2 + my^2), mz]';
   Rm = [ 0.0882, 0.0042, 0.0071;
          0.0042, 0.0814, 0.0015;
          0.0071, 0.0015, 0.1161];
@@ -146,7 +150,7 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       if ~any(isnan(mag))  % Mag measurements are available.
         L_hat = (1-alpha)*L_hat + alpha * norm(mag);
 
-        magOut = abs(norm(mag) - L_hat) > threshold;
+        magOut = abs(norm(mag) - L_hat) > mag_threshold;
 
         ownView.setMagDist(magOut);
 
