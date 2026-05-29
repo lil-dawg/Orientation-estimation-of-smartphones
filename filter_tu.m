@@ -29,6 +29,25 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
                    0.0065  0.1607  0.0084;
                   -0.0124  0.0084  0.1485];
 
+  g0 = [-0.0497, 0.0228, 9.8325]'; % Mean of acceleration during rest
+  Ra = 1.0e-03 * [ 0.1014, -0.0167, -0.0062   % Covariance acc during rest
+                  -0.0167,  0.1210,  0.0016
+                  -0.0062,  0.0016,  0.0646];
+
+  mx = -7.8563;
+  my = -15.9990;
+  mz = -48.1585;
+
+  m0 = [0, sqrt(mx^2 + my^2), mz]';
+  Rm = [ 0.0882, 0.0042, 0.0071;
+         0.0042, 0.0814, 0.0015;
+         0.0071, 0.0015, 0.1161];
+
+  g = 9.82;
+
+  alpha = 0.01;
+  L_hat = norm(m0);
+  mag_threshold = 5;
 
   % Current filter state.
   x = [1; 0; 0 ;0];
@@ -112,7 +131,14 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       t_prev = t;
 
       if ~any(isnan(acc))  % Acc measurements are available.
-        % Task 6
+        threshold = 0.2;
+        accOut = abs(norm(acc) - g) > threshold;
+
+        ownView.setAccDist(accOut);
+
+        if ~accOut
+            [x, P] = mu_g(x, P, acc, Ra, g0);
+        end
       end
 
       if ~any(isnan(gyr))  % Gyro measurements are available.
@@ -122,7 +148,15 @@ function [xhat, meas] = filter_tu(calAcc, calGyr, calMag)
       end
 
       if ~any(isnan(mag))  % Mag measurements are available.
-        % Task 9
+        L_hat = (1-alpha)*L_hat + alpha * norm(mag);
+
+        magOut = abs(norm(mag) - L_hat) > mag_threshold;
+
+        ownView.setMagDist(magOut);
+
+        if ~magOut
+            [x, P] = mu_m(x, P, mag, m0, Rm);
+        end
       end
 
       if ~any(isnan(orientation))
